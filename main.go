@@ -5,12 +5,61 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"sort"
 
 	mp "kazdream-test-task/map"
 	string "kazdream-test-task/string"
 	strings "kazdream-test-task/strings"
 )
+
+func mergeSort(items []mp.Elem) []mp.Elem {
+	var num = len(items)
+
+	if num == 1 {
+		return items
+	}
+
+	middle := int(num / 2)
+	var (
+		left  = make([]mp.Elem, middle)
+		right = make([]mp.Elem, num-middle)
+	)
+	for i := 0; i < num; i++ {
+		if i < middle {
+			left[i] = items[i]
+		} else {
+			right[i-middle] = items[i]
+		}
+	}
+
+	return merge(mergeSort(left), mergeSort(right))
+}
+
+func merge(left, right []mp.Elem) (result []mp.Elem) {
+	result = make([]mp.Elem, len(left)+len(right))
+
+	i := 0
+	for len(left) > 0 && len(right) > 0 {
+		if left[0].V > right[0].V {
+			result[i] = left[0]
+			left = left[1:]
+		} else {
+			result[i] = right[0]
+			right = right[1:]
+		}
+		i++
+	}
+
+	for j := 0; j < len(left); j++ {
+		result[i] = left[j]
+		i++
+	}
+	for j := 0; j < len(right); j++ {
+		result[i] = right[j]
+		i++
+	}
+
+	return
+}
 
 func main() {
 	file, err := os.Open("mobydick.txt")
@@ -36,11 +85,9 @@ func main() {
 	}
 
 	arrFromMap := newMap.ToArray()
-	sort.Slice(arrFromMap, func(i, j int) bool {
-		return arrFromMap[i].V > arrFromMap[j].V
-	})
-	arrFromMap = arrFromMap[:20]
-	for _, ar := range arrFromMap {
-		fmt.Printf("%s %d\n", ar.K.Bytes, ar.V)
+	sorted := mergeSort(arrFromMap)
+	sorted = sorted[:20]
+	for _, ar := range sorted {
+		fmt.Printf("%d %s\n", ar.V, ar.K.Bytes)
 	}
 }
