@@ -16,7 +16,6 @@ type Elem struct {
 }
 
 type bucket struct {
-	hash  int
 	elems []elem
 }
 
@@ -28,9 +27,6 @@ type MapGo struct {
 
 func NewMap(bucketsNum int) *MapGo {
 	buckets := make([]bucket, bucketsNum)
-	for i := range buckets {
-		buckets[i].hash = i
-	}
 	return &MapGo{
 		bucketsNum: bucketsNum,
 		buckets:    buckets,
@@ -39,24 +35,20 @@ func NewMap(bucketsNum int) *MapGo {
 }
 
 func (m *MapGo) Add(k string.String) {
-	for i, bucket := range m.buckets {
-		h := hash(k.Bytes)
-		if bucket.hash == h {
-			ok := false
-			for j, el := range m.buckets[i].elems {
-				if strings.Equal(el.k, k) {
-					m.buckets[i].elems[j].v++
-					ok = true
-					break
-				}
-			}
-			if !ok {
-				m.buckets[i].elems = append(m.buckets[i].elems, elem{
-					k: k,
-					v: 1,
-				})
-			}
+	h := hash(k.Bytes)
+	ok := false
+	for j, el := range m.buckets[h].elems {
+		if strings.Equal(el.k, k) {
+			m.buckets[h].elems[j].v++
+			ok = true
+			break
 		}
+	}
+	if !ok {
+		m.buckets[h].elems = append(m.buckets[h].elems, elem{
+			k: k,
+			v: 1,
+		})
 	}
 }
 
@@ -75,17 +67,13 @@ func (m *MapGo) ToArray() []Elem {
 
 func (m *MapGo) Delete(k string.String) bool {
 	var res bool
-	for i, bucket := range m.buckets {
-		h := hash(k.Bytes)
-		if bucket.hash == h {
-			for j, el := range m.buckets[i].elems {
-				if strings.Equal(el.k, k) {
-					res = true
-					m.buckets[i].elems[j] = m.buckets[i].elems[len(m.buckets[i].elems)-1]
-					m.buckets[i].elems = m.buckets[i].elems[:len(m.buckets[i].elems)-1]
-					break
-				}
-			}
+	h := hash(k.Bytes)
+	for j, el := range m.buckets[h].elems {
+		if strings.Equal(el.k, k) {
+			res = true
+			m.buckets[h].elems[j] = m.buckets[h].elems[len(m.buckets[h].elems)-1]
+			m.buckets[h].elems = m.buckets[h].elems[:len(m.buckets[h].elems)-1]
+			break
 		}
 	}
 	return res
@@ -94,16 +82,12 @@ func (m *MapGo) Delete(k string.String) bool {
 func (m *MapGo) Lookup(k string.String) (int, bool) {
 	var ok bool
 	var val int
-	for i, bucket := range m.buckets {
-		h := hash(k.Bytes)
-		if bucket.hash == h {
-			for _, el := range m.buckets[i].elems {
-				if strings.Equal(el.k, k) {
-					ok = true
-					val = el.v
-					break
-				}
-			}
+	h := hash(k.Bytes)
+	for _, el := range m.buckets[h].elems {
+		if strings.Equal(el.k, k) {
+			ok = true
+			val = el.v
+			break
 		}
 	}
 	return val, ok
